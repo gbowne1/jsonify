@@ -23,6 +23,25 @@ const JsonArray &JsonValue::getArray() const { return array_; }
 const JsonObject &JsonValue::getObject() const { return object_; }
 
 // JsonParser implementation
+
+std::shared_ptr<JsonValue> JsonParser::loadFromFile(const std::string &filename)
+{
+    std::ifstream file(filename);
+    if (!file.is_open())
+    {
+        throw std::runtime_error("Could not open file: " + filename);
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string jsonContent = buffer.str(); // Get the content as a string
+
+    std::cout << "Loaded JSON content:\n" << jsonContent << std::endl; // Debug output
+
+    return parse(jsonContent); 
+}
+
+
 std::shared_ptr<JsonValue> JsonParser::parse(const std::string &json)
 {
     std::istringstream is(json);
@@ -73,6 +92,7 @@ JsonObject JsonParser::parseObject(std::istream &is)
     while (true)
     {
         auto key = parseString(is);
+        std::cout << "Parsed key: " << key << std::endl; // Debug output
         skipWhitespace(is);
         char c = is.get();
         if (c != ':')
@@ -116,8 +136,10 @@ std::string JsonParser::parseString(std::istream &is)
 {
     std::string str;
     char c;
-    while (is.get(c) && c != '"')
+    while (is.get(c))
     {
+        if (c == '"')
+            return str; // Return the string when the closing quote is found
         if (c == '\\')
         {
             is.get(c);
@@ -154,7 +176,7 @@ std::string JsonParser::parseString(std::istream &is)
             str += c;
         }
     }
-    return str;
+    throw std::runtime_error("Unterminated string"); // Handle unterminated string
 }
 
 bool JsonParser::parseBoolean(std::istream &is, char first)

@@ -55,7 +55,8 @@ class JsonParser
 {
 public:
     static std::shared_ptr<JsonValue> parse(const std::string &json);
-
+    static std::shared_ptr<JsonValue> loadFromFile(const std::string &filename);
+    
 private:
     static void skipWhitespace(std::istream &is);
     static std::shared_ptr<JsonValue> parseValue(std::istream &is);
