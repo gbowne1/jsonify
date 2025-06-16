@@ -1,3 +1,5 @@
+#include <iostream>
+#include <exception>
 #include "jsonparser.h"
 
 int main()
@@ -22,8 +24,7 @@ int main()
         if (jsonValue->getType() == JsonValue::Type::Object)
         {
             const auto &obj = jsonValue->getObject();
-            std::cout << "Name: " << obj.at("name")->getString() << std::
-                        std::cout << "Name: " << obj.at("name")->getString() << std::endl;
+            std::cout << "Name: " << obj.at("name")->getString() << std::endl;
             std::cout << "Age: " << obj.at("age")->getNumber() << std::endl;
             std::cout << "Is Student: " << (obj.at("isStudent")->getBool() ? "Yes" : "No") << std::endl;
 
