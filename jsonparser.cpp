@@ -94,7 +94,8 @@ JsonObject JsonParser::parseObject(std::istream &is)
         auto key = parseString(is);
         std::cout << "Parsed key: " << key << std::endl; // Debug output
         skipWhitespace(is);
-        char c = is.get();
+        c = is.get();
+        std::cout << "Next character after key: '" << c << "'" << std::endl; // Debug output
         if (c != ':')
             throw std::runtime_error("Expected ':' after key in object, got '" + std::string(1, c) + "'");
 

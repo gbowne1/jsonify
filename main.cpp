@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
         try
         {
             auto jsonValue = JsonParser::loadFromFile(filename);
+            std::cout << "Loaded JSON from file: " << filename << std::endl; // Debug output
             if (jsonValue->getType() == JsonValue::Type::Object)
             {
                 const auto &obj = jsonValue->getObject();
@@ -56,6 +57,7 @@ int main(int argc, char *argv[])
 
         try
         {
+            std::cout << "Using hardcoded JSON string." << std::endl; // Debug output
             auto jsonValue = JsonParser::parse(jsonStr); // Parse the hardcoded JSON string
             if (jsonValue->getType() == JsonValue::Type::Object)
             {
