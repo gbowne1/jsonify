@@ -43,15 +43,7 @@ int main(int argc, char *argv[])
         // Fallback to hardcoded JSON string if no filename is provided
         std::string jsonStr = R"(
             {
-                "name": "John Doe",
-                "age": 30,
-                "city": "New York",
-                "isStudent": false,
-                "grades": [85, 90, 78],
-                "address": {
-                    "street": "123 Main St",
-                    "zip": "10001"
-                }
+                "key": "value"
             }
         )";
 

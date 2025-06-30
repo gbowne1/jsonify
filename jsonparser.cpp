@@ -7,6 +7,11 @@
 #include <cctype>
 #include <utility>
 
+const std::string COLOR_RESET = "\033[0m";
+const std::string COLOR_ERROR = "\033[31m"; // Red
+const std::string COLOR_WARNING = "\033[33m"; // Yellow
+const std::string COLOR_ALERT = "\033[32m"; // Green
+
 // JsonValue implementation
 JsonValue::JsonValue() : type_(Type::Null) {}
 JsonValue::JsonValue(bool value) : type_(Type::Boolean), bool_(value) {}
@@ -60,6 +65,7 @@ std::shared_ptr<JsonValue> JsonParser::parseValue(std::istream &is)
 {
     skipWhitespace(is);
     char c = is.get();
+    std::cout << "Parsing value, got character: '" << c << "'" << std::endl;
 
     if (c == '{')
         return std::make_shared<JsonValue>(parseObject(is));
@@ -86,11 +92,16 @@ JsonObject JsonParser::parseObject(std::istream &is)
     skipWhitespace(is);
     char c = is.get();
     if (c == '}')
-        return obj;
-    is.unget();
+        return obj; // Empty object
+    is.unget(); // Put back the character for further processing
 
     while (true)
     {
+        skipWhitespace(is);
+        c = is.get();
+        if (c != '"') // Check for opening quote
+            throw std::runtime_error("Expected '\"' at the beginning of key in object, got '" + std::string(1, c) + "'");
+
         auto key = parseString(is);
         std::cout << "Parsed key: " << key << std::endl; // Debug output
         skipWhitespace(is);
@@ -110,6 +121,7 @@ JsonObject JsonParser::parseObject(std::istream &is)
     }
     return obj;
 }
+
 
 JsonArray JsonParser::parseArray(std::istream &is)
 {
@@ -216,3 +228,64 @@ double JsonParser::parseNumber(std::istream &is)
     return std::stod(numStr);
 }
 
+bool lintJson(const std::string &json)
+{
+    // Basic checks for common issues
+    int braceCount = 0;
+    int bracketCount = 0;
+    bool inString = false;
+
+    for (size_t i = 0; i < json.length(); ++i)
+    {
+        char c = json[i];
+
+        if (c == '"')
+        {
+            inString = !inString; // Toggle inString state
+        }
+
+        if (!inString)
+        {
+            if (c == '{') braceCount++;
+            if (c == '}') braceCount--;
+            if (c == '[') bracketCount++;
+            if (c == ']') bracketCount--;
+
+            // Check for missing commas (basic check)
+            if (c == '}' || c == ']')
+            {
+                if (i > 0 && json[i - 1] != ',')
+                {
+                    std::cout << COLOR_WARNING << "Warning: Missing comma before closing brace/bracket." << COLOR_RESET << std::endl;
+                }
+            }
+        }
+    }
+
+    if (braceCount != 0 || bracketCount != 0)
+    {
+        std::cout << COLOR_ERROR << "Error: Mismatched braces or brackets." << COLOR_RESET << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+std::string correctJson(const std::string &json)
+{
+    std::string correctedJson = json;
+
+    // Example correction: Add missing commas (very basic)
+    for (size_t i = 0; i < correctedJson.length() - 1; ++i)
+    {
+        if (correctedJson[i] == '}' || correctedJson[i] == ']')
+        {
+            if (correctedJson[i + 1] != ',')
+            {
+                correctedJson.insert(i + 1, ",");
+            }
+        }
+    }
+
+    return correctedJson;
+}
