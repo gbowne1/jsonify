@@ -5,10 +5,14 @@ void printIndent(std::ostream& os, int indent) {
 }
 
 void printJson(const std::shared_ptr<JsonValue>& value, std::ostream& os, int indent, int indentStep, bool compact) {
+    if (!value) {
+        os << "null";
+        return;
+    }
     using Type = JsonValue::Type;
     switch (value->getType()) {
     case Type::Null: os << "null"; break;
-    case Type::Boolean: os << (value->getBool() ? "true" : "false"); break;
+    case Type::Bool: os << (value->getBool() ? "true" : "false"); break;
     case Type::Number: os << value->getNumber(); break;
     case Type::String: os << '"' << value->getString() << '"'; break;
     case Type::Array: {

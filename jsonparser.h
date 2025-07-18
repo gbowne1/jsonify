@@ -56,7 +56,7 @@ class JsonParser
 public:
     static std::shared_ptr<JsonValue> parse(const std::string &json);
     static std::shared_ptr<JsonValue> loadFromFile(const std::string &filename);
-    
+
 private:
     static void skipWhitespace(std::istream &is);
     static std::shared_ptr<JsonValue> parseValue(std::istream &is);
@@ -66,6 +66,9 @@ private:
     static bool parseBoolean(std::istream &is, char first);
     static std::shared_ptr<JsonValue> parseNull(std::istream &is);
     static double parseNumber(std::istream &is);
+    static std::string decodeUnicode(const std::string &hex); // Declare as static
 };
+
+std::string correctJson(const std::string &json);
 
 #endif // JSONPARSER_H

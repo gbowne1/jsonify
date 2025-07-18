@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
             auto jsonValue = JsonParser::parse(jsonStr); // Parse the hardcoded JSON string
             processJsonObject(jsonValue); // Call the function to process the JSON object
         } catch (const std::exception &e) {
-            std::cerr << "Error: " << e.what() << std::endl;
+            std::cerr << "Error parsing hardcoded JSON string: " << e.what() << std::endl;
         }
     }
 
