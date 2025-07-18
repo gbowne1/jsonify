@@ -14,6 +14,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra -Wpedantic")
 set(SOURCES
     main.cpp
     jsonparser.cpp
+    jsonformatter.cpp
+    jsonlinter.cpp
 )
 
 # Create executable

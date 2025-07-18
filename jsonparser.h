@@ -21,7 +21,7 @@ public:
     enum class Type
     {
         Null,
-        Boolean,
+        Bool,
         Number,
         String,
         Array,

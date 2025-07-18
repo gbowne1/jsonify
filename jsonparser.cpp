@@ -14,7 +14,7 @@ const std::string COLOR_ALERT = "\033[32m"; // Green
 
 // JsonValue implementation
 JsonValue::JsonValue() : type_(Type::Null) {}
-JsonValue::JsonValue(bool value) : type_(Type::Boolean), bool_(value) {}
+JsonValue::JsonValue(bool value) : type_(Type::Bool), bool_(value) {}
 JsonValue::JsonValue(double value) : type_(Type::Number), number_(value) {}
 JsonValue::JsonValue(const std::string &value) : type_(Type::String), string_(value) {}
 JsonValue::JsonValue(JsonArray value) : type_(Type::Array), array_(std::move(value)) {}
