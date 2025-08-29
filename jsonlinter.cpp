@@ -16,10 +16,32 @@ std::vector<JsonLintIssue> lintJson(const std::string& jsonStr) {
 
 std::vector<JsonLintIssue> lintJson(const std::shared_ptr<JsonValue>& root) {
     std::vector<JsonLintIssue> issues;
-    // Implement checks here:
-    // - Duplicate keys
-    // - Bad values
-    // - (etc)
-    // Traverse the tree recursively if needed
+
+    if (!root) return issues;
+
+    if (root->getType() == JsonValue::Type::Object) {
+        std::unordered_set<std::string> seenKeys;
+        const auto& obj = root->getObject();
+
+        for (const auto& kv : obj) {
+            if (!seenKeys.insert(kv.first).second) {
+                issues.push_back({JsonLintIssue::Severity::Warning,
+                                  "Duplicate key: " + kv.first,
+                                  -1, -1});
+            }
+
+            auto childIssues = lintJson(kv.second);
+            issues.insert(issues.end(), childIssues.begin(), childIssues.end());
+        }
+    }
+
+    if (root->getType() == JsonValue::Type::Array) {
+        for (const auto& item : root->getArray()) {
+            auto childIssues = lintJson(item);
+            issues.insert(issues.end(), childIssues.begin(), childIssues.end());
+        }
+    }
+
     return issues;
 }
+
