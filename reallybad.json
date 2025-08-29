@@ -1,0 +1,48 @@
+{
+  name: 'Alice', // user's name
+  age: "30",
+  hobbies: {
+    0: "reading",
+    1: "cycling",
+  },
+  "active": TRUE,
+  "bio": “Loves cats and coffee.”,
+  "": "empty key",
+  "status": undefined,
+  "location": {
+    "city": "Portland",
+    "state": "OR",
+    "coordinates": {
+      "lat": 45.512794,
+      "lng": -122.679565,
+    }
+  },
+  "location": "overwritten",
+  "notes": [
+    "First note",
+    "Second note",
+    // "Third note"
+    "Fourth note",
+  ],
+  "deep": {
+    "level1": {
+      "level2": {
+        "level3": {
+          "level4": {
+            "level5": {
+              "level6": {
+                "level7": {
+                  "level8": {
+                    "level9": {
+                      "level10": "Too deep!"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+}
