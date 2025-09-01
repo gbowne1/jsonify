@@ -1,10 +1,10 @@
 # Makefile for JSON Parser
 
 CXX = g++
-CXXFLAGS = -Wall -Werror -Wextra -Wpedantic -std=c++17
+CXXFLAGS = -Wall -Werror -Wextra -Wpedantic -pedantic -std=c++17
 LDFLAGS = 
 
-SRC = main.cpp jsonparser.cpp
+SRC = main.cpp jsonparser.cpp jsonlinter.cpp jsonformatter.cpp
 OBJ = $(SRC:.cpp=.o)
 TARGET = jsonparser
 
