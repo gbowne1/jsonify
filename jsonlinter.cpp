@@ -1,4 +1,5 @@
 #include "jsonlinter.h"
+#include <cmath>
 #include <unordered_set>
 
 std::vector<JsonLintIssue> lintJson(const std::string& jsonStr) {
