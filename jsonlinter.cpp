@@ -2,6 +2,15 @@
 #include <cmath>
 #include <unordered_set>
 
+void lintNumber(const std::shared_ptr<JsonValue>& value, std::vector<JsonLintIssue>& issues) {
+    if (value->getType() == JsonValue::Type::Number) {
+        double num = value->getNumber();
+        if (std::isinf(num) || std::isnan(num)) {
+            issues.push_back({JsonLintIssue::Severity::Error, "Invalid number (inf or nan)", -1, -1});
+        }
+    }
+}
+
 std::vector<JsonLintIssue> lintJson(const std::string& jsonStr) {
     std::vector<JsonLintIssue> issues;
     // Optionally: parse, catch errors, add to issues
@@ -46,13 +55,4 @@ std::vector<JsonLintIssue> lintJson(const std::shared_ptr<JsonValue>& root) {
     }
 
     return issues;
-}
-
-void lintNumber(const std::shared_ptr<JsonValue>& value, std::vector<JsonLintIssue>& issues) {
-    if (value->getType() == JsonValue::Type::Number) {
-        double num = value->getNumber();
-        if (std::isinf(num) || std::isnan(num)) {
-            issues.push_back({JsonLintIssue::Severity::Error, "Invalid number (inf or nan)", -1, -1});
-        }
-    }
 }
