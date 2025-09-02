@@ -20,6 +20,8 @@ std::vector<JsonLintIssue> lintJson(const std::shared_ptr<JsonValue>& root) {
 
     if (!root) return issues;
 
+    lintNumber(root, issues);
+
     if (root->getType() == JsonValue::Type::Object) {
         std::unordered_set<std::string> seenKeys;
         const auto& obj = root->getObject();
