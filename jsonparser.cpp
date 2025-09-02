@@ -298,21 +298,16 @@ double JsonParser::parseNumber(std::istream &is)
     }
 }
 
-std::string correctJson(const std::string &json)
-{
-    std::string correctedJson = json;
-
-    // Example correction: Add missing commas (very basic)
-    for (size_t i = 0; i < correctedJson.length() - 1; ++i)
-    {
-        if (correctedJson[i] == '}' || correctedJson[i] == ']')
-        {
-            if (correctedJson[i + 1] != ',')
-            {
-                correctedJson.insert(i + 1, ",");
-            }
+std::string correctJson(const std::string &json) {
+    std::string corrected = json;
+    bool inString = false, inEscape = false;
+    for (size_t i = 0; i < corrected.length() - 1; ++i) {
+        if (corrected[i] == '"' && !inEscape) inString = !inString;
+        inEscape = corrected[i] == '\\' && !inEscape;
+        if (!inString && (corrected[i] == '}' || corrected[i] == ']') && 
+            corrected[i + 1] != ',' && corrected[i + 1] != '}' && corrected[i + 1] != ']') {
+            corrected.insert(i + 1, ",");
         }
     }
-
-    return correctedJson;
+    return corrected;
 }
