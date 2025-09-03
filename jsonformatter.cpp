@@ -16,8 +16,33 @@ void printJson(const std::shared_ptr<JsonValue>& value, std::ostream& os, int in
     switch (value->getType()) {
     case Type::Null: os << "null"; break;
     case Type::Bool: os << (value->getBool() ? "true" : "false"); break;
-    case Type::Number: os << value->getNumber(); break;
-    case Type::String: os << '"' << value->getString() << '"'; break;
+    case Type::Number: {
+        double num = value->getNumber();
+        if (std::isinf(num) || std::isnan(num)) {
+            os << "null";
+        } else {
+            os << num;
+        }
+        break;
+    }
+    case Type::String: {
+        os << '"';
+        const std::string& str = value->getString();
+        for (char c : str) {
+            switch (c) {
+                case '"': os << "\\\""; break;
+                case '\\': os << "\\\\"; break;
+                case '\b': os << "\\b"; break;
+                case '\f': os << "\\f"; break;
+                case '\n': os << "\\n"; break;
+                case '\r': os << "\\r"; break;
+                case '\t': os << "\\t"; break;
+                default: os << c; break;
+            }
+        }
+        os << '"';
+        break;
+    }
     case Type::Array: {
         const auto& arr = value->getArray();
         os << "[";
