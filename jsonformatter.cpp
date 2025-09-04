@@ -1,3 +1,4 @@
+#include <cmath>
 #include <ostream>
 #include "jsonformatter.h"
 
