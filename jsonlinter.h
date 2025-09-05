@@ -10,7 +10,7 @@ struct JsonLintIssue {
     enum class Severity { Error, Warning, Info };
     Severity severity;
     std::string message;
-    int line, column; // Optional: set -1 if unavailable
+    int line, column;
 };
 
 std::vector<JsonLintIssue> lintJson(const std::string& jsonStr);
