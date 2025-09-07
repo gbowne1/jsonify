@@ -6,6 +6,8 @@
 #include <memory>
 #include "jsonparser.h"
 
+class JsonValue;
+
 struct JsonLintIssue {
     enum class Severity { Error, Warning, Info };
     Severity severity;
@@ -13,7 +15,7 @@ struct JsonLintIssue {
     int line, column;
 };
 
-std::vector<JsonLintIssue> lintJson(const std::string& jsonStr);
+// std::vector<JsonLintIssue> lintJson(const std::string& jsonStr);
 std::vector<JsonLintIssue> lintJson(const std::shared_ptr<JsonValue>& root);
 
 #endif
