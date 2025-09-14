@@ -1,0 +1,17 @@
+{
+    // This is a single-line comment
+    "name": "John Doe",
+    /* This is a
+       multi-line comment */
+    "age": 30,
+    "hobbies": [
+        "reading", // Inline comment
+        /* Another multi-line comment */ "gaming",
+        "coding"
+    ],
+    "address": {
+        "street": "123 Main St",
+        // Comment before the last field
+        "city": "Anytown"
+    } /* Final comment */
+}
