@@ -1,0 +1,11 @@
+{
+    // Valid single-line comment
+    "url": "http://example.com", // This should not be treated as a comment
+    "data": [
+        1,
+        /* Unclosed multi-line comment
+        2,
+        3
+    ],
+    "extra": "value", // Trailing comma after this
+}
