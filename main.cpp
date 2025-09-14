@@ -10,12 +10,12 @@
 void printUsage() {
     std::cout << "Usage: jsonify [options] <file.json>\n"
               << "Options:\n"
-              << "  --lint             Lint the JSON file\n"
-              << "  --format           Format the JSON file\n"
-              << "  --compact          Output compact JSON (no pretty-print)\n"
-              << "  --indent N         Set indent spaces (default 2)\n"
-              << "  --jsonc            Allow JSONC (comments)\n"
-              << "  --help             Show this help message\n";
+              << "  --lint              Lint the JSON file\n"
+              << "  --format            Format the JSON file\n"
+              << "  --compact           Output compact JSON (no pretty-print)\n"
+              << "  --indent N          Set indent spaces (default 2)\n"
+              << "  --jsonc             Allow JSONC (comments)\n"
+              << "  --help              Show this help message\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -59,12 +59,29 @@ int main(int argc, char* argv[]) {
         buffer << inFile.rdbuf();
         std::string jsonContent = buffer.str();
 
-        // Optional: Strip comments if --jsonc
         if (allowJsonc) {
             size_t pos;
+            
             while ((pos = jsonContent.find("//")) != std::string::npos) {
                 size_t end = jsonContent.find('\n', pos);
                 jsonContent.erase(pos, (end != std::string::npos ? end - pos : std::string::npos));
+            }
+
+            while ((pos = jsonContent.find("/*")) != std::string::npos) {
+                size_t end = jsonContent.find("*/", pos);
+                if (end != std::string::npos) {
+                    jsonContent.erase(pos, end - pos + 2);
+                } else {
+                    std::cerr << "Warning: Unclosed multi-line comment.\n";
+                    jsonContent.erase(pos);
+                    break;
+                }
+            }
+            
+            // Fix dangling commas after stripping comments
+            size_t last_char_pos = jsonContent.find_last_not_of(" \t\n\r");
+            if (last_char_pos != std::string::npos && jsonContent[last_char_pos] == ',') {
+                jsonContent.erase(last_char_pos, 1);
             }
         }
 
