@@ -60,31 +60,49 @@ int main(int argc, char* argv[]) {
         std::string jsonContent = buffer.str();
 
         if (allowJsonc) {
-            size_t pos;
-            
-            while ((pos = jsonContent.find("//")) != std::string::npos) {
-                size_t end = jsonContent.find('\n', pos);
-                jsonContent.erase(pos, (end != std::string::npos ? end - pos : std::string::npos));
-            }
-
-            while ((pos = jsonContent.find("/*")) != std::string::npos) {
-                size_t end = jsonContent.find("*/", pos);
-                if (end != std::string::npos) {
-                    jsonContent.erase(pos, end - pos + 2);
+            std::string cleanedContent;
+            bool inString = false, inEscape = false;
+            size_t pos = 0;
+        
+            // Process single-line comments
+            while (pos < jsonContent.size()) {
+                if (inEscape) {
+                    cleanedContent += jsonContent[pos];
+                    inEscape = false;
+                } else if (jsonContent[pos] == '"' && !inString) {
+                    inString = true;
+                    cleanedContent += jsonContent[pos];
+                } else if (jsonContent[pos] == '"' && inString) {
+                    inString = false;
+                    cleanedContent += jsonContent[pos];
+                } else if (jsonContent[pos] == '\\' && inString) {
+                    inEscape = true;
+                    cleanedContent += jsonContent[pos];
+                } else if (!inString && pos + 1 < jsonContent.size() && jsonContent[pos] == '/' && jsonContent[pos + 1] == '/') {
+                    size_t end = jsonContent.find('\n', pos);
+                    if (end == std::string::npos) end = jsonContent.size();
+                    pos = end - 1; // Will increment to end in loop
+                } else if (!inString && pos + 1 < jsonContent.size() && jsonContent[pos] == '/' && jsonContent[pos + 1] == '*') {
+                    size_t end = jsonContent.find("*/", pos);
+                    if (end == std::string::npos) {
+                        std::cerr << "Warning: Unclosed multi-line comment.\n";
+                        break;
+                    }
+                    pos = end + 1; // Skip past '*/'
                 } else {
-                    std::cerr << "Warning: Unclosed multi-line comment.\n";
-                    jsonContent.erase(pos);
-                    break;
+                    cleanedContent += jsonContent[pos];
                 }
+                pos++;
             }
-            
-            // Fix dangling commas after stripping comments
+        
+            jsonContent = cleanedContent;
+        
+            // Fix dangling commas
             size_t last_char_pos = jsonContent.find_last_not_of(" \t\n\r");
             if (last_char_pos != std::string::npos && jsonContent[last_char_pos] == ',') {
                 jsonContent.erase(last_char_pos, 1);
             }
         }
-
         auto root = JsonParser::parse(jsonContent);
 
         if (doLint) {
