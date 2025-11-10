@@ -6,70 +6,69 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <sstream>
 #include <memory>
 #include <stdexcept>
 
 class JsonValue;
 
 using JsonObject = std::unordered_map<std::string, std::shared_ptr<JsonValue>>;
-using JsonArray = std::vector<std::shared_ptr<JsonValue>>;
+using JsonArray  = std::vector<std::shared_ptr<JsonValue>>;
 
-class JsonValue
-{
+class JsonValue {
 public:
-    enum class Type
-    {
-        Null,
-        Bool,
-        Number,
-        String,
-        Array,
-        Object
-    };
+    enum class Type { Null, Bool, Number, String, Array, Object };
 
     JsonValue();
-    explicit JsonValue(bool value);
-    explicit JsonValue(double value);
-    explicit JsonValue(const std::string &value);
-    explicit JsonValue(JsonArray value);
-    explicit JsonValue(JsonObject value);
+    explicit JsonValue(bool v);
+    explicit JsonValue(double v);
+    explicit JsonValue(std::string v);
+    explicit JsonValue(JsonArray v);
+    explicit JsonValue(JsonObject v);
 
-    Type getType() const;
-    bool getBool() const;
-    double getNumber() const;
-    const std::string &getString() const;
-    const JsonArray &getArray() const;
-    const JsonObject &getObject() const;
+    Type               getType()   const;
+    bool               getBool()   const;
+    double             getNumber() const;
+    const std::string& getString() const;
+    const JsonArray&   getArray()  const;
+    const JsonObject&  getObject() const;
 
 private:
-    Type type_;
-    bool bool_;
-    double number_;
+    Type        type_;
+    bool        bool_;
+    double      number_;
     std::string string_;
-    JsonArray array_;
-    JsonObject object_;
+    JsonArray   array_;
+    JsonObject  object_;
 };
 
-class JsonParser
-{
+class JsonParser {
 public:
-    // static std::shared_ptr<JsonValue> parse(const std::string &json);
-    static std::shared_ptr<JsonValue> parse(const std::string& jsonContent);
-    static std::shared_ptr<JsonValue> loadFromFile(const std::string &filename);
+    static std::shared_ptr<JsonValue> parse(const std::string& json);
+    static std::shared_ptr<JsonValue> loadFromFile(const std::string& filename);
+
+    // helpers for line/column tracking
+    struct Pos { size_t line = 1, col = 1; };
+    static Pos currentPos(const std::string& src, size_t idx);
 
 private:
-    static void skipWhitespace(std::istream &is);
-    static std::shared_ptr<JsonValue> parseValue(std::istream &is);
-    static JsonObject parseObject(std::istream &is);
-    static JsonArray parseArray(std::istream &is);
-    static std::string parseString(std::istream &is);
-    static bool parseBoolean(std::istream &is, char first);
-    static std::shared_ptr<JsonValue> parseNull(std::istream &is);
-    static double parseNumber(std::istream &is);
-    static std::string decodeUnicode(const std::string &hex); // Declare as static
+    static void skipWhitespace(std::istream& is, const std::string& src, Pos& pos);
+    static std::shared_ptr<JsonValue> parseValue(std::istream& is,
+                                                 const std::string& src, Pos& pos);
+    static JsonObject parseObject(std::istream& is,
+                                  const std::string& src, Pos& pos);
+    static JsonArray  parseArray (std::istream& is,
+                                  const std::string& src, Pos& pos);
+    static std::string parseString(std::istream& is,
+                                   const std::string& src, Pos& pos);
+    static bool parseBoolean(std::istream& is,
+                             const std::string& src, Pos& pos, char first);
+    static std::shared_ptr<JsonValue> parseNull(std::istream& is,
+                                                const std::string& src, Pos& pos);
+    static double parseNumber(std::istream& is,
+                              const std::string& src, Pos& pos);
+    static std::string decodeUnicode(const std::string& hex);
 };
 
-std::string correctJson(const std::string &json);
+std::string correctJson(const std::string& json);   // simple auto-correction
 
 #endif // JSONPARSER_H
