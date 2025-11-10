@@ -1,58 +1,47 @@
 #include "jsonlinter.h"
-#include <cmath>
 #include <unordered_set>
+#include <cmath>
 
-void lintNumber(const std::shared_ptr<JsonValue>& value, std::vector<JsonLintIssue>& issues) {
-    if (value->getType() == JsonValue::Type::Number) {
-        double num = value->getNumber();
-        if (std::isinf(num) || std::isnan(num)) {
-            issues.push_back({JsonLintIssue::Severity::Error, "Invalid number (inf or nan)", -1, -1});
-        }
+static void lintNumber(const std::shared_ptr<JsonValue>& v,
+                       const std::string& src,
+                       std::vector<JsonLintIssue>& issues) {
+    if (v->getType() != JsonValue::Type::Number) return;
+    double n = v->getNumber();
+    if (std::isinf(n) || std::isnan(n)) {
+        JsonParser::Pos p = JsonParser::currentPos(src,
+                /* crude – we don’t store start index, but the error is obvious */
+                0);
+        issues.push_back({JsonLintIssue::Severity::Error,
+                          "Invalid number (inf/nan)", static_cast<int>(p.line),
+                          static_cast<int>(p.col)});
     }
 }
 
-std::vector<JsonLintIssue> lintJson(const std::string& jsonStr) {
-    std::vector<JsonLintIssue> issues;
-    // Optionally: parse, catch errors, add to issues
-    try {
-        auto root = JsonParser::parse(jsonStr);
-        auto objIssues = lintJson(root);
-        issues.insert(issues.end(), objIssues.begin(), objIssues.end());
-    } catch (const std::exception& e) {
-        issues.push_back({JsonLintIssue::Severity::Error, e.what(), -1, -1});
-    }
-    return issues;
-}
+static void lintRec(const std::shared_ptr<JsonValue>& node,
+                    const std::string& src,
+                    std::vector<JsonLintIssue>& issues) {
+    if (!node) return;
 
-std::vector<JsonLintIssue> lintJson(const std::shared_ptr<JsonValue>& root) {
-    std::vector<JsonLintIssue> issues;
+    lintNumber(node, src, issues);
 
-    if (!root) return issues;
-
-    lintNumber(root, issues);
-
-    if (root->getType() == JsonValue::Type::Object) {
-        std::unordered_set<std::string> seenKeys;
-        const auto& obj = root->getObject();
-
-        for (const auto& kv : obj) {
-            if (!seenKeys.insert(kv.first).second) {
+    if (node->getType() == JsonValue::Type::Object) {
+        std::unordered_set<std::string> seen;
+        for (const auto& kv : node->getObject()) {
+            if (!seen.insert(kv.first).second) {
                 issues.push_back({JsonLintIssue::Severity::Warning,
-                                  "Duplicate key: " + kv.first,
-                                  -1, -1});
+                                  "Duplicate key: " + kv.first, -1, -1});
             }
-
-            auto childIssues = lintJson(kv.second);
-            issues.insert(issues.end(), childIssues.begin(), childIssues.end());
+            lintRec(kv.second, src, issues);
         }
+    } else if (node->getType() == JsonValue::Type::Array) {
+        for (const auto& el : node->getArray())
+            lintRec(el, src, issues);
     }
+}
 
-    if (root->getType() == JsonValue::Type::Array) {
-        for (const auto& item : root->getArray()) {
-            auto childIssues = lintJson(item);
-            issues.insert(issues.end(), childIssues.begin(), childIssues.end());
-        }
-    }
-
+std::vector<JsonLintIssue> lintJson(const std::shared_ptr<JsonValue>& root,
+                                    const std::string& source) {
+    std::vector<JsonLintIssue> issues;
+    lintRec(root, source, issues);
     return issues;
 }
