@@ -1,313 +1,253 @@
 #include "jsonparser.h"
-#include <iostream>      
-#include <sstream>
-#include <memory>
-#include <string>
-#include <stdexcept>
 #include <cctype>
-#include <utility>
-#include <cstdint>
-#include <fstream> // Added for std::ifstream
+#include <iomanip>
+#include <sstream>
 
-const std::string COLOR_RESET = "\033[0m";
-const std::string COLOR_ERROR = "\033[31m"; // Red
-const std::string COLOR_WARNING = "\033[33m"; // Yellow
-const std::string COLOR_ALERT = "\033[32m"; // Green
-
-// JsonValue implementation
 JsonValue::JsonValue() : type_(Type::Null) {}
-JsonValue::JsonValue(bool value) : type_(Type::Bool), bool_(value) {}
-JsonValue::JsonValue(double value) : type_(Type::Number), number_(value) {}
-JsonValue::JsonValue(const std::string &value) : type_(Type::String), string_(value) {}
-JsonValue::JsonValue(JsonArray value) : type_(Type::Array), array_(std::move(value)) {}
-JsonValue::JsonValue(JsonObject value) : type_(Type::Object), object_(std::move(value)) {}
+JsonValue::JsonValue(bool v)       : type_(Type::Bool),   bool_(v) {}
+JsonValue::JsonValue(double v)     : type_(Type::Number), number_(v) {}
+JsonValue::JsonValue(std::string v): type_(Type::String), string_(std::move(v)) {}
+JsonValue::JsonValue(JsonArray v)  : type_(Type::Array),  array_(std::move(v)) {}
+JsonValue::JsonValue(JsonObject v) : type_(Type::Object), object_(std::move(v)) {}
 
-JsonValue::Type JsonValue::getType() const { return type_; }
-bool JsonValue::getBool() const { return bool_; }
-double JsonValue::getNumber() const { return number_; }
-const std::string &JsonValue::getString() const { return string_; }
-const JsonArray &JsonValue::getArray() const { return array_; }
-const JsonObject &JsonValue::getObject() const { return object_; }
+JsonValue::Type               JsonValue::getType()   const { return type_; }
+bool                          JsonValue::getBool()   const { return bool_; }
+double                        JsonValue::getNumber() const { return number_; }
+const std::string&            JsonValue::getString() const { return string_; }
+const JsonArray&              JsonValue::getArray()  const { return array_; }
+const JsonObject&             JsonValue::getObject() const { return object_; }
 
-// JsonParser implementation
-
-std::shared_ptr<JsonValue> JsonParser::loadFromFile(const std::string &filename)
-{
-    std::ifstream file(filename);
-    if (!file.is_open())
-    {
-        throw std::runtime_error("Could not open file: " + filename);
+/* --------------------------------------------------------------- */
+JsonParser::Pos JsonParser::currentPos(const std::string& src, size_t idx) {
+    Pos p{1,1};
+    for (size_t i = 0; i < idx && i < src.size(); ++i) {
+        if (src[i] == '\n') { ++p.line; p.col = 1; }
+        else                { ++p.col; }
     }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    std::string jsonContent = buffer.str(); // Get the content as a string
-
-    std::cout << "Loaded JSON content:\n" << jsonContent << std::endl; // Debug output
-
-    return parse(jsonContent); 
+    return p;
 }
 
-std::string JsonParser::decodeUnicode(const std::string &hex)
-{
-    if (hex.length() != 4) {
-        throw std::runtime_error("Invalid Unicode escape sequence: must be 4 hex digits");
-    }
-
-    // Convert hex string to uint32_t
-    uint32_t codepoint; // Change to uint32_t
-    try {
-        size_t pos;
-        codepoint = std::stoul(hex, &pos, 16);
-        if (pos != 4) {
-            throw std::runtime_error("Invalid Unicode escape sequence: incomplete hex value");
-        }
-    } catch (const std::exception&) {
-        throw std::runtime_error("Invalid Unicode escape sequence: invalid hex value");
-    }
-
-    std::string result;
-
-    // Convert Unicode codepoint to UTF-8
-    if (codepoint <= 0x7F) {
-        // 1-byte UTF-8 (ASCII)
-        result += static_cast<char>(codepoint);
-    } else if (codepoint <= 0x7FF) {
-        // 2-byte UTF-8
-        result += static_cast<char>(0xC0 | ((codepoint >> 6) & 0x1F));
-        result += static_cast<char>(0x80 | (codepoint & 0x3F));
-    } else if (codepoint <= 0xFFFF) {
-        // 3-byte UTF-8
-        result += static_cast<char>(0xE0 | ((codepoint >> 12) & 0x0F));
-        result += static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
-        result += static_cast<char>(0x80 | (codepoint & 0x3F));
-    } else if (codepoint <= 0x10FFFF) {
-        // 4-byte UTF-8 (valid range for Unicode)
-        result += static_cast<char>(0xF0 | ((codepoint >> 18) & 0x07));
-        result += static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F));
-        result += static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
-        result += static_cast<char>(0x80 | (codepoint & 0x3F));
-    } else {
-        throw std::runtime_error("Unicode codepoint out of range");
-    }
-
-    return result;
+/* --------------------------------------------------------------- */
+std::shared_ptr<JsonValue> JsonParser::loadFromFile(const std::string& filename) {
+    std::ifstream f(filename);
+    if (!f) throw std::runtime_error("Cannot open file: " + filename);
+    std::stringstream buf; buf << f.rdbuf();
+    return parse(buf.str());
 }
 
-std::shared_ptr<JsonValue> JsonParser::parse(const std::string &json)
-{
+/* --------------------------------------------------------------- */
+std::shared_ptr<JsonValue> JsonParser::parse(const std::string& json) {
     std::istringstream is(json);
-    return parseValue(is);
+    Pos pos{1,1};
+    return parseValue(is, json, pos);
 }
 
-void JsonParser::skipWhitespace(std::istream &is)
-{
-    while (std::isspace(is.peek()))
-    {
+/* --------------------------------------------------------------- */
+void JsonParser::skipWhitespace(std::istream& is,
+                                const std::string& src, Pos& pos) {
+    while (is.peek() != EOF) {
+        char c = static_cast<char>(is.peek());
+        if (!std::isspace(c)) break;
         is.get();
+        if (c == '\n') { ++pos.line; pos.col = 1; }
+        else           { ++pos.col; }
     }
 }
 
-std::shared_ptr<JsonValue> JsonParser::parseValue(std::istream &is)
-{
-    skipWhitespace(is);
-    char c = is.get();
-    std::cout << "Parsing value, got character: '" << c << "'" << std::endl;
+/* --------------------------------------------------------------- */
+std::shared_ptr<JsonValue> JsonParser::parseValue(std::istream& is,
+                                                  const std::string& src,
+                                                  Pos& pos) {
+    skipWhitespace(is, src, pos);
+    if (is.eof()) throw std::runtime_error("Unexpected end of input");
 
-    if (c == '{')
-        return std::make_shared<JsonValue>(parseObject(is));
-    if (c == '[')
-        return std::make_shared<JsonValue>(parseArray(is));
-    if (c == '"')
-        return std::make_shared<JsonValue>(parseString(is));
-    if (c == 't' || c == 'f')
-        return std::make_shared<JsonValue>(parseBoolean(is, c));
-    if (c == 'n')
-        return parseNull(is);
-    if (std::isdigit(c) || c == '-')
-    {
-        is.unget();
-        return std::make_shared<JsonValue>(parseNumber(is));
-    }
+    char c = static_cast<char>(is.get());
+    ++pos.col;
 
-    throw std::runtime_error("Unexpected character");
+    if (c == '{') return std::make_shared<JsonValue>(parseObject(is, src, pos));
+    if (c == '[') return std::make_shared<JsonValue>(parseArray (is, src, pos));
+    if (c == '"') { is.unget(); return std::make_shared<JsonValue>(parseString(is, src, pos)); }
+    if (c == 't' || c == 'f') { is.unget(); return std::make_shared<JsonValue>(parseBoolean(is, src, pos, c)); }
+    if (c == 'n') { is.unget(); return parseNull(is, src, pos); }
+    if (std::isdigit(c) || c == '-') { is.unget(); return std::make_shared<JsonValue>(parseNumber(is, src, pos)); }
+
+    throw std::runtime_error("Unexpected character '" + std::string(1,c) + "'");
 }
 
-JsonObject JsonParser::parseObject(std::istream &is)
-{
+/* --------------------------------------------------------------- */
+JsonObject JsonParser::parseObject(std::istream& is,
+                                   const std::string& src, Pos& pos) {
     JsonObject obj;
-    skipWhitespace(is);
-    char c = is.get();
-    if (c == '}')
-        return obj; // Empty object
-    is.unget(); // Put back the character for further processing
+    skipWhitespace(is, src, pos);
+    if (is.peek() == '}') { is.get(); ++pos.col; return obj; }
 
-    while (true)
-    {
-        skipWhitespace(is);
-        c = is.get();
-        if (c != '"') // Check for opening quote
-            throw std::runtime_error("Expected '\"' at the beginning of key in object, got '" + std::string(1, c) + "'");
+    while (true) {
+        skipWhitespace(is, src, pos);
+        if (is.peek() != '"')
+            throw std::runtime_error("Expected '\"' for object key");
+        std::string key = parseString(is, src, pos);
 
-        auto key = parseString(is);
-        std::cout << "Parsed key: " << key << std::endl; // Debug output
-        skipWhitespace(is);
-        c = is.get();
-        std::cout << "Next character after key: '" << c << "'" << std::endl; // Debug output
-        if (c != ':')
-            throw std::runtime_error("Expected ':' after key in object, got '" + std::string(1, c) + "'");
+        skipWhitespace(is, src, pos);
+        if (is.get() != ':') {
+            Pos p = currentPos(src, is.tellg()-1);
+            throw std::runtime_error("Expected ':' after key (line "
+                                     + std::to_string(p.line) + ", col " + std::to_string(p.col) + ")");
+        }
+        ++pos.col;
 
-        obj[key] = parseValue(is);
+        obj[key] = parseValue(is, src, pos);
 
-        skipWhitespace(is);
-        c = is.get();
-        if (c == '}')
-            break;
-        if (c != ',')
-            throw std::runtime_error("Expected ',' or '}' in object, got '" + std::string(1, c) + "'");
+        skipWhitespace(is, src, pos);
+        char sep = static_cast<char>(is.get());
+        ++pos.col;
+        if (sep == '}') break;
+        if (sep != ',')
+            throw std::runtime_error("Expected ',' or '}' in object");
     }
     return obj;
 }
 
-JsonArray JsonParser::parseArray(std::istream &is)
-{
+/* --------------------------------------------------------------- */
+JsonArray JsonParser::parseArray(std::istream& is,
+                                 const std::string& src, Pos& pos) {
     JsonArray arr;
-    skipWhitespace(is);
-    char c = is.get();
-    if (c == ']')
-        return arr;
-    is.unget();
+    skipWhitespace(is, src, pos);
+    if (is.peek() == ']') { is.get(); ++pos.col; return arr; }
 
-    while (true)
-    {
-        arr.push_back(parseValue(is));
-        skipWhitespace(is);
-        c = is.get();
-        if (c == ']')
-            break;
-        if (c != ',')
-            throw std::runtime_error("Expected ',' or ']' in array, got '" + std::string(1, c) + "'");
+    while (true) {
+        arr.push_back(parseValue(is, src, pos));
+        skipWhitespace(is, src, pos);
+        char sep = static_cast<char>(is.get());
+        ++pos.col;
+        if (sep == ']') break;
+        if (sep != ',')
+            throw std::runtime_error("Expected ',' or ']' in array");
     }
     return arr;
 }
 
-std::string JsonParser::parseString(std::istream &is)
-{
-    std::string str;
+/* --------------------------------------------------------------- */
+std::string JsonParser::parseString(std::istream& is,
+                                    const std::string& src, Pos& pos) {
+    if (is.get() != '"') throw std::runtime_error("Internal error: parseString called without opening quote");
+    ++pos.col;
+
+    std::string s;
     char c;
-    while (is.get(c))
-    {
-        if (c == '"')
-            return str; // Return the string when the closing quote is found
-        if (c == '\\')
-        {
-            is.get(c);
-            switch (c)
-            {
-            case '"':
-            case '\\':
-            case '/':
-                str += c;
-                break;
-            case 'b':
-                str += '\b';
-                break;
-            case 'f':
-                str += '\f';
-                break;
-            case 'n':
-                str += '\n';
-                break;
-            case 'r':
-                str += '\r';
-                break;
-            case 't':
-                str += '\t';
-                break;
-            case 'u': {
-                std::string hex(4, ' ');
-                is.read(&hex[0], 4);
-                try {
-                    std::string decoded = decodeUnicode(hex); // Call static member function
-                    str += decoded;
-                } catch (const std::exception&) {
-                    throw std::runtime_error("Invalid Unicode escape sequence");
+    while (is.get(c)) {
+        ++pos.col;
+        if (c == '"') return s;
+        if (c == '\\') {
+            if (!is.get(c)) throw std::runtime_error("Unterminated escape sequence");
+            ++pos.col;
+            switch (c) {
+                case '"': case '\\': case '/': s += c; break;
+                case 'b': s += '\b'; break;
+                case 'f': s += '\f'; break;
+                case 'n': s += '\n'; break;
+                case 'r': s += '\r'; break;
+                case 't': s += '\t'; break;
+                case 'u': {
+                    std::string hex(4,' ');
+                    if (is.read(&hex[0],4).gcount() != 4)
+                        throw std::runtime_error("Incomplete Unicode escape");
+                    pos.col += 4;
+                    s += decodeUnicode(hex);
+                    break;
                 }
-                break;
+                default: throw std::runtime_error("Invalid escape sequence");
             }
-            default:
-                throw std::runtime_error("Invalid escape sequence");
-            }
-        }
-        else
-        {
-            str += c;
+        } else {
+            s += c;
         }
     }
-    throw std::runtime_error("Unterminated string"); // Handle unterminated string
+    throw std::runtime_error("Unterminated string");
 }
 
-bool JsonParser::parseBoolean(std::istream &is, char first)
-{
-    std::string token(1, first);
+/* --------------------------------------------------------------- */
+bool JsonParser::parseBoolean(std::istream& is,
+                              const std::string& src, Pos& pos, char first) {
+    std::string token{first};
     char c;
-    while (is.peek() != EOF && std::isalpha(is.peek())) {
-        is.get(c);
-        token += c;
+    while (std::isalpha(is.peek())) {
+        is.get(c); token += c; ++pos.col;
     }
-    if (token == "true") return true;
+    if (token == "true")  return true;
     if (token == "false") return false;
-    throw std::runtime_error("Invalid boolean value: " + token);
+    throw std::runtime_error("Invalid boolean: " + token);
 }
 
-std::shared_ptr<JsonValue> JsonParser::parseNull(std::istream &is)
-{
-    std::string rest(3, ' ');
-    is.read(&rest[0], 3);
-    if (rest == "ull")
-        return std::make_shared<JsonValue>();
-    throw std::runtime_error("Invalid null value");
+/* --------------------------------------------------------------- */
+std::shared_ptr<JsonValue> JsonParser::parseNull(std::istream& is,
+                                                 const std::string& src, Pos& pos) {
+    std::string lit = "null";
+    for (char expected : lit.substr(1)) {
+        if (is.get() != expected) throw std::runtime_error("Invalid null");
+        ++pos.col;
+    }
+    return std::make_shared<JsonValue>();
 }
 
-double JsonParser::parseNumber(std::istream &is)
-{
-    std::string numStr;
-    char c;
+/* --------------------------------------------------------------- */
+double JsonParser::parseNumber(std::istream& is,
+                               const std::string& src, Pos& pos) {
+    std::string num;
     bool hasDigit = false;
-    while (is.peek() != EOF && (std::isdigit(is.peek()) || is.peek() == '.' || 
-                                is.peek() == 'e' || is.peek() == 'E' || 
-                                is.peek() == '+' || is.peek() == '-')) {
-        is.get(c);
-        numStr += c;
+    while (is.peek() != EOF) {
+        char c = static_cast<char>(is.peek());
+        if (! (std::isdigit(c) || c=='.' || c=='e' || c=='E' || c=='+' || c=='-')) break;
+        is.get(); num += c; ++pos.col;
         if (std::isdigit(c)) hasDigit = true;
     }
-    if (!hasDigit) {
-        throw std::runtime_error("Invalid number format: no digits found");
-    }
+    if (!hasDigit) throw std::runtime_error("Number without digits");
     try {
-        size_t pos;
-        double result = std::stod(numStr, &pos);
-        if (pos != numStr.length()) {
-            throw std::runtime_error("Invalid number format: trailing characters");
-        }
-        return result;
-    } catch (const std::invalid_argument&) {
+        size_t idx;
+        double d = std::stod(num, &idx);
+        if (idx != num.size()) throw std::runtime_error("Trailing junk in number");
+        return d;
+    } catch (...) {
         throw std::runtime_error("Invalid number format");
-    } catch (const std::out_of_range&) {
-        throw std::runtime_error("Number out of range");
     }
 }
 
-std::string correctJson(const std::string &json) {
-    std::string corrected = json;
-    bool inString = false, inEscape = false;
-    for (size_t i = 0; i < corrected.length() - 1; ++i) {
-        if (corrected[i] == '"' && !inEscape) inString = !inString;
-        inEscape = corrected[i] == '\\' && !inEscape;
-        if (!inString && (corrected[i] == '}' || corrected[i] == ']') && 
-            corrected[i + 1] != ',' && corrected[i + 1] != '}' && corrected[i + 1] != ']') {
-            corrected.insert(i + 1, ",");
+/* --------------------------------------------------------------- */
+std::string JsonParser::decodeUnicode(const std::string& hex) {
+    uint32_t cp = static_cast<uint32_t>(std::stoul(hex, nullptr, 16));
+    std::string utf8;
+    if (cp <= 0x7F) {
+        utf8 += static_cast<char>(cp);
+    } else if (cp <= 0x7FF) {
+        utf8 += static_cast<char>(0xC0 | (cp >> 6));
+        utf8 += static_cast<char>(0x80 | (cp & 0x3F));
+    } else if (cp <= 0xFFFF) {
+        utf8 += static_cast<char>(0xE0 | (cp >> 12));
+        utf8 += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+        utf8 += static_cast<char>(0x80 | (cp & 0x3F));
+    } else if (cp <= 0x10FFFF) {
+        utf8 += static_cast<char>(0xF0 | (cp >> 18));
+        utf8 += static_cast<char>(0x80 | ((cp >> 12) & 0x3F));
+        utf8 += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
+        utf8 += static_cast<char>(0x80 | (cp & 0x3F));
+    } else {
+        throw std::runtime_error("Unicode codepoint out of range");
+    }
+    return utf8;
+}
+
+/* --------------------------------------------------------------- */
+std::string correctJson(const std::string& json) {
+    std::string out;
+    bool inStr = false, esc = false;
+    for (size_t i = 0; i < json.size(); ++i) {
+        char c = json[i];
+        if (esc) { out += c; esc = false; continue; }
+        if (c == '\\') { esc = true; out += c; continue; }
+        if (c == '"' && !esc) { inStr = !inStr; }
+        out += c;
+        if (!inStr && (c == '}' || c == ']') && i+1 < json.size()) {
+            char next = json[i+1];
+            if (next != ',' && next != '}' && next != ']') out += ',';
         }
     }
-    return corrected;
+    return out;
 }
