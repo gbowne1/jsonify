@@ -47,7 +47,13 @@ public:
     static std::shared_ptr<JsonValue> loadFromFile(const std::string& filename);
 
     // helpers for line/column tracking
-    struct Pos { size_t line = 1, col = 1; };
+    struct Pos {
+        size_t line = 1;
+        size_t col = 1;
+        Pos() = default;
+        Pos(size_t l, size_t c) : line(l), col(c) {}
+    };
+
     static Pos currentPos(const std::string& src, size_t idx);
 
 private:
