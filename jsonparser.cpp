@@ -89,7 +89,7 @@ JsonObject JsonParser::parseObject(std::istream& is,
 
         skipWhitespace(is, src, pos);
         if (is.get() != ':') {
-            Pos p = currentPos(src, is.tellg()-1);
+            Pos p = currentPos(src, int(is.tellg()) - 1);
             throw std::runtime_error("Expected ':' after key (line "
                                      + std::to_string(p.line) + ", col " + std::to_string(p.col) + ")");
         }
