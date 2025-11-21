@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
 
         // ---- Format ----
         if (doFormat) {
-            printJson(root, std::cout, 0, indent, compact);
+            printJson(root, std::cout, 0, indent, compact, useColor);
             std::cout << '\n';
         }
 
