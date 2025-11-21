@@ -22,6 +22,9 @@ int main(int argc, char* argv[]) {
     if (argc < 2) { printUsage(); return 1; }
 
     bool doLint = false, doFormat = false, compact = false, jsonc = false;
+    bool useColor = true;
+    bool colorSpecified = false;
+    
     int indent = 2;
     std::string filename;
 
@@ -31,6 +34,8 @@ int main(int argc, char* argv[]) {
         else if (arg == "--format") doFormat = true;
         else if (arg == "--compact") compact = true;
         else if (arg == "--jsonc")   jsonc   = true;
+        else if (arg == "--color") { useColor = true; colorSpecified = true; }
+        else if (arg == "--no-color") { useColor = false; colorSpecified = true; }
         else if (arg == "--indent" && i+1 < argc) { indent = std::stoi(argv[++i]); }
         else if (arg == "--help") { printUsage(); return 0; }
         else if (arg[0] != '-')   filename = arg;
