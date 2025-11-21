@@ -1,65 +1,101 @@
+jsonformatter.cpp
 #include "jsonformatter.h"
 #include <cmath>
 #include <iomanip>
+#include <string>
 
 void printIndent(std::ostream& os, int indent) {
     os << std::string(indent, ' ');
 }
 
+// Updated function signature with the 'useColor' parameter
 void printJson(const std::shared_ptr<JsonValue>& value,
                std::ostream& os,
-               int indent, int indentStep, bool compact, bool useColor) { // <--- Added useColor
-    if (!value) { os << AnsiColor::NULL_T << "null" << AnsiColor::RESET; return; } // Handle null for initial check
+               int indent, int indentStep, bool compact, bool useColor) {
+    
+    // Helper to get color code or empty string
+    auto get_color = [&](const std::string& color_code) {
+        return useColor ? color_code : "";
+    };
+    
+    // Helper to get the reset code or empty string
+    auto get_reset = [&]() {
+        return useColor ? AnsiColor::RESET : "";
+    };
+
+    if (!value) {
+        os << get_color(AnsiColor::NULL_T) << "null" << get_reset();
+        return;
+    }
 
     using Type = JsonValue::Type;
     switch (value->getType()) {
     case Type::Null:
-        os << (useColor ? AnsiColor::NULL_T : "") << "null" << (useColor ? AnsiColor::RESET : "");
+        os << get_color(AnsiColor::NULL_T) << "null" << get_reset();
         break;
     case Type::Bool:
-        os << (useColor ? AnsiColor::BOOL : "") << (value->getBool() ? "true" : "false") << (useColor ? AnsiColor::RESET : "");
+        os << get_color(AnsiColor::BOOL) << (value->getBool() ? "true" : "false") << get_reset();
         break;
     case Type::Number: {
         double n = value->getNumber();
-        os << (useColor ? AnsiColor::NUMBER : ""); // Apply color
+        os << get_color(AnsiColor::NUMBER);
         if (std::isinf(n) || std::isnan(n)) os << "null";
         else os << std::fixed << std::setprecision(15) << n;
-        os << (useColor ? AnsiColor::RESET : ""); // Reset color
+        os << get_reset();
         break;
     }
     case Type::String: {
-        os << (useColor ? AnsiColor::STRING : "") << '"'; // Apply string color before quote
-        // ... (string escaping logic remains the same)
-        // ... (for loop for char c : value->getString())
-        os << '"' << (useColor ? AnsiColor::RESET : ""); // Reset color after closing quote
+        os << get_color(AnsiColor::STRING) << '"';
+        for (char c : value->getString()) {
+            switch (c) {
+                case '"':  os << "\\\""; break;
+                case '\\': os << "\\\\"; break;
+                case '\b': os << "\\b"; break;
+                case '\f': os << "\\f"; break;
+                case '\n': os << "\\n"; break;
+                case '\r': os << "\\r"; break;
+                case '\t': os << "\\t"; break;
+                default:   os << c; break;
+            }
+        }
+        os << '"' << get_reset();
         break;
     }
     case Type::Array: {
         const auto& a = value->getArray();
         os << '[';
-        // ... (formatting logic remains the same)
+        if (!compact && !a.empty()) os << '\n';
         for (size_t i = 0; i < a.size(); ++i) {
             if (!compact) printIndent(os, indent + indentStep);
-            printJson(a[i], os, indent + indentStep, indentStep, compact, useColor); // <--- Pass useColor
-            // ... (rest of array logic)
+            // Recursive call must pass the useColor state
+            printJson(a[i], os, indent + indentStep, indentStep, compact, useColor);
+            if (i + 1 < a.size()) os << ',';
+            if (!compact) os << '\n';
         }
-        // ... (rest of array logic)
+        if (!compact && !a.empty()) printIndent(os, indent);
         os << ']';
         break;
     }
     case Type::Object: {
         const auto& o = value->getObject();
         os << '{';
-        // ... (formatting logic remains the same)
+        if (!compact && !o.empty()) os << '\n';
         size_t i = 0;
         for (const auto& kv : o) {
             if (!compact) printIndent(os, indent + indentStep);
-            os << (useColor ? AnsiColor::KEY : "") << '"' << kv.first << "\":" << (useColor ? AnsiColor::RESET : "") << " "; // <--- Key coloring
-            printJson(kv.second, os, indent + indentStep, indentStep, compact, useColor); // <--- Pass useColor
-            // ... (rest of object logic)
+            
+            // Apply color to the key string only
+            os << get_color(AnsiColor::KEY) << '"' << kv.first << "\":" << get_reset();
+            os << (!compact ? " " : "");
+
+            // Recursive call must pass the useColor state
+            printJson(kv.second, os, indent + indentStep, indentStep, compact, useColor);
+            
+            if (i + 1 < o.size()) os << ',';
+            if (!compact) os << '\n';
             ++i;
         }
-        // ... (rest of object logic)
+        if (!compact && !o.empty()) printIndent(os, indent);
         os << '}';
         break;
     }
