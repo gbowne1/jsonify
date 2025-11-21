@@ -1,4 +1,3 @@
-jsonformatter.cpp
 #include "jsonformatter.h"
 #include <cmath>
 #include <iomanip>
