@@ -6,6 +6,8 @@
 #include "jsonformatter.h"
 #include "jsonlinter.h"
 
+const std::string APP_VERSION = "0.0.1";
+
 void printUsage() {
     std::cout <<
         "Usage: jsonify [options] <file.json>\n"
@@ -15,6 +17,7 @@ void printUsage() {
         "  --compact       Compact output (no newlines/indent)\n"
         "  --indent N      Indent width (default 2)\n"
         "  --jsonc         Allow comments (JSONC)\n"
+        "  -v, --version   Show version information\n"
         "  --help          Show this help\n";
 }
 
@@ -30,6 +33,12 @@ int main(int argc, char* argv[]) {
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
+
+        if (arg == "--version" || arg == "-version" || arg == "-v" || arg == "-V") {
+            std::cout << "jsonify v" << APP_VERSION << " (Semantic Versioning)\n";
+            return 0; // Exit successfully after printing version
+        }
+        
         if (arg == "--lint")      doLint   = true;
         else if (arg == "--format") doFormat = true;
         else if (arg == "--compact") compact = true;
