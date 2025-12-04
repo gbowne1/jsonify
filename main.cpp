@@ -17,6 +17,8 @@ void printUsage() {
         "  --compact       Compact output (no newlines/indent)\n"
         "  --indent N      Indent width (default 2)\n"
         "  --jsonc         Allow comments (JSONC)\n"
+        "  --color         Enable color output (default)\n"
+        "  --no-color      Disable color output\n"
         "  -v, --version   Show version information\n"
         "  --help          Show this help\n";
 }
