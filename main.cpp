@@ -14,6 +14,7 @@ void printUsage() {
         "Options:\n"
         "  --lint          Lint the JSON file\n"
         "  --format        Pretty-print the JSON file\n"
+        "  --fix, -f       Attempt to auto-correct the JSON\n"
         "  --compact       Compact output (no newlines/indent)\n"
         "  --indent N      Indent width (default 2)\n"
         "  --jsonc         Allow comments (JSONC)\n"
@@ -26,7 +27,7 @@ void printUsage() {
 int main(int argc, char* argv[]) {
     if (argc < 2) { printUsage(); return 1; }
 
-    bool doLint = false, doFormat = false, compact = false, jsonc = false;
+    bool doLint = false, doFormat = false, compact = false, jsonc = false, doFix = false;
     bool useColor = true;
     bool colorSpecified = false;
     
@@ -38,18 +39,21 @@ int main(int argc, char* argv[]) {
 
         if (arg == "--version" || arg == "-version" || arg == "-v" || arg == "-V") {
             std::cout << "jsonify v" << APP_VERSION << " (Semantic Versioning)\n";
-            return 0; // Exit successfully after printing version
+            return 0;
         }
         
         if (arg == "--lint")      doLint   = true;
         else if (arg == "--format") doFormat = true;
         else if (arg == "--compact") compact = true;
-        else if (arg == "--jsonc")   jsonc   = true;
+        else if (arg == "--jsonc")    jsonc    = true;
+        else if (arg == "--fix" || arg == "-fix" || arg == "-Fix" || arg == "--Fix" || arg == "-f" || arg == "-F" || arg == "--F" || arg == "--f") {
+            doFix = true;
+        }
         else if (arg == "--color") { useColor = true; colorSpecified = true; }
         else if (arg == "--no-color") { useColor = false; colorSpecified = true; }
         else if (arg == "--indent" && i+1 < argc) { indent = std::stoi(argv[++i]); }
         else if (arg == "--help") { printUsage(); return 0; }
-        else if (arg[0] != '-')   filename = arg;
+        else if (arg[0] != '-')    filename = arg;
         else { std::cerr << "Unknown option: " << arg << '\n'; return 1; }
     }
 
@@ -86,6 +90,10 @@ int main(int argc, char* argv[]) {
             src = clean;
         }
 
+        if (doFix) {
+            src = correctJson(src);
+        }
+
         // ---- Parse ----
         auto root = JsonParser::parse(src);
 
@@ -98,9 +106,9 @@ int main(int argc, char* argv[]) {
                 for (const auto& iss : issues) {
                     std::string sev;
                     switch (iss.severity) {
-                        case JsonLintIssue::Severity::Error:   sev = "Error";   break;
+                        case JsonLintIssue::Severity::Error:    sev = "Error";    break;
                         case JsonLintIssue::Severity::Warning: sev = "Warning"; break;
-                        case JsonLintIssue::Severity::Info:    sev = "Info";    break;
+                        case JsonLintIssue::Severity::Info:    sev = "Info";     break;
                     }
                     std::cout << sev << ": " << iss.message;
                     if (iss.line != -1)
