@@ -15,6 +15,7 @@ void printUsage() {
         "  --lint          Lint the JSON file\n"
         "  --format        Pretty-print the JSON file\n"
         "  --fix, -f       Attempt to auto-correct the JSON\n"
+        "  --quiet, -q.    Suppress success messages\n"
         "  --compact       Compact output (no newlines/indent)\n"
         "  --indent N      Indent width (default 2)\n"
         "  --jsonc         Allow comments (JSONC)\n"
@@ -27,7 +28,7 @@ void printUsage() {
 int main(int argc, char* argv[]) {
     if (argc < 2) { printUsage(); return 1; }
 
-    bool doLint = false, doFormat = false, compact = false, jsonc = false, doFix = false;
+    bool doLint = false, doFormat = false, compact = false, jsonc = false, doFix = false, disquiet = false;
     bool useColor = true;
     bool colorSpecified = false;
     
@@ -41,13 +42,15 @@ int main(int argc, char* argv[]) {
             std::cout << "jsonify v" << APP_VERSION << " (Semantic Versioning)\n";
             return 0;
         }
-        
         if (arg == "--lint")      doLint   = true;
         else if (arg == "--format") doFormat = true;
         else if (arg == "--compact") compact = true;
         else if (arg == "--jsonc")    jsonc    = true;
         else if (arg == "--fix" || arg == "-f" ) {
             doFix = true;
+        }
+        else if (arg == "--quiet" || arg == "-q") {
+            doQuiet = true;
         }
         else if (arg == "--color") { useColor = true; colorSpecified = true; }
         else if (arg == "--no-color") { useColor = false; colorSpecified = true; }
