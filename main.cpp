@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
         if (doLint) {
             auto issues = lintJson(root, src);
             if (issues.empty()) {
-                std::cout << "No lint issues.\n";
+               if (!doQuiet) std::cout << "No lint issues.\n";
             } else {
                 for (const auto& iss : issues) {
                     std::string sev;
@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
             std::cout << '\n';
         }
 
-        if (!doLint && !doFormat) std::cout << "Parsed successfully.\n";
+        if (!doLint && !doFormat && doQuiet) std::cout << "Parsed successfully.\n";
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << '\n';
