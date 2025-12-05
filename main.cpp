@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
         else if (arg == "--format") doFormat = true;
         else if (arg == "--compact") compact = true;
         else if (arg == "--jsonc")    jsonc    = true;
-        else if (arg == "--fix" || arg == "-fix" || arg == "-Fix" || arg == "--Fix" || arg == "-f" || arg == "-F" || arg == "--F" || arg == "--f") {
+        else if (arg == "--fix" || arg == "-f" ) {
             doFix = true;
         }
         else if (arg == "--color") { useColor = true; colorSpecified = true; }
