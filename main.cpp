@@ -28,7 +28,7 @@ void printUsage() {
 int main(int argc, char* argv[]) {
     if (argc < 2) { printUsage(); return 1; }
 
-    bool doLint = false, doFormat = false, compact = false, jsonc = false, doFix = false, disquiet = false;
+    bool doLint = false, doFormat = false, compact = false, jsonc = false, doFix = false, doQuiet = false;
     bool useColor = true;
     bool colorSpecified = false;
     
