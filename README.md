@@ -51,6 +51,20 @@ jsonify [options] <file.json>
 - `--jsonc`: Allow JSONC files with `//` comments.
 - `--help`: Display usage information.
 
+
+## Linting Rules
+
+When you use the `--lint` option, the linter checks your JSON for the following issues:
+
+- **Empty Keys**: Flags objects that contain empty string keys (e.g., "": "value").
+- **Deep Nesting**: Warns if JSON nesting exceeds 20 levels, helping to prevent stack overflow and mitigate potential Denial of Service (DoS) risks.
+- **Naming Conventions**: Checks that object keys follow a consistent style, such as camelCase or snake_case (configurable or enforced by project settings).
+- **Array Consistency**: Detects and warns when an array contains mixed data types (e.g., `[1, "two", 3]`), which may indicate a schema error.
+- **Invalid Numbers**: Flags invalid numbers such as `Infinity` or `NaN`.
+- **Duplicate Keys**: Detects duplicate keys in objects.
+
+These rules help ensure your JSON is robust, consistent, and safe for use in production environments.
+
 ### Examples
 
 - Format a JSON file with default indentation:
