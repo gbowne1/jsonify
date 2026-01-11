@@ -45,6 +45,7 @@ std::shared_ptr<JsonValue> JsonParser::parse(const std::string& json) {
 /* --------------------------------------------------------------- */
 void JsonParser::skipWhitespace(std::istream& is,
                                 const std::string& src, Pos& pos) {
+    (void)src;
     while (is.peek() != EOF) {
         char c = static_cast<char>(is.peek());
         if (!std::isspace(c)) break;
@@ -129,6 +130,7 @@ JsonArray JsonParser::parseArray(std::istream& is,
 /* --------------------------------------------------------------- */
 std::string JsonParser::parseString(std::istream& is,
                                     const std::string& src, Pos& pos) {
+    (void)src;
     if (is.get() != '"') throw std::runtime_error("Internal error: parseString called without opening quote");
     ++pos.col;
 
@@ -167,6 +169,7 @@ std::string JsonParser::parseString(std::istream& is,
 /* --------------------------------------------------------------- */
 bool JsonParser::parseBoolean(std::istream& is,
                               const std::string& src, Pos& pos, char first) {
+    (void)src;
     std::string token{first};
     char c;
     while (std::isalpha(is.peek())) {
@@ -180,6 +183,7 @@ bool JsonParser::parseBoolean(std::istream& is,
 /* --------------------------------------------------------------- */
 std::shared_ptr<JsonValue> JsonParser::parseNull(std::istream& is,
                                                  const std::string& src, Pos& pos) {
+    (void)src;
     std::string lit = "null";
     for (char expected : lit.substr(1)) {
         if (is.get() != expected) throw std::runtime_error("Invalid null");
@@ -191,6 +195,7 @@ std::shared_ptr<JsonValue> JsonParser::parseNull(std::istream& is,
 /* --------------------------------------------------------------- */
 double JsonParser::parseNumber(std::istream& is,
                                const std::string& src, Pos& pos) {
+    (void)src;
     std::string num;
     bool hasDigit = false;
     while (is.peek() != EOF) {
