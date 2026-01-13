@@ -4,18 +4,48 @@
 #include <sstream>
 
 JsonValue::JsonValue() : type_(Type::Null) {}
-JsonValue::JsonValue(bool v)       : type_(Type::Bool),   bool_(v) {}
-JsonValue::JsonValue(double v)     : type_(Type::Number), number_(v) {}
-JsonValue::JsonValue(std::string v): type_(Type::String), string_(std::move(v)) {}
-JsonValue::JsonValue(JsonArray v)  : type_(Type::Array),  array_(std::move(v)) {}
-JsonValue::JsonValue(JsonObject v) : type_(Type::Object), object_(std::move(v)) {}
+JsonValue::JsonValue(bool v)       : type_(Type::Bool),   value_(v) {}
+JsonValue::JsonValue(double v)     : type_(Type::Number), value_(v) {}
+JsonValue::JsonValue(std::string v): type_(Type::String), value_(std::move(v)) {}
+JsonValue::JsonValue(JsonArray v)  : type_(Type::Array),  value_(std::move(v)) {}
+JsonValue::JsonValue(JsonObject v) : type_(Type::Object), value_(std::move(v)) {}
 
-JsonValue::Type               JsonValue::getType()   const { return type_; }
-bool                          JsonValue::getBool()   const { return bool_; }
-double                        JsonValue::getNumber() const { return number_; }
-const std::string&            JsonValue::getString() const { return string_; }
-const JsonArray&              JsonValue::getArray()  const { return array_; }
-const JsonObject&             JsonValue::getObject() const { return object_; }
+JsonValue::Type JsonValue::getType()   const { return type_; }
+
+bool JsonValue::getBool()   const {
+    if (std::holds_alternative<bool>(value_)) {
+        return std::get<bool>(value_);
+    }
+    throw std::runtime_error("Cannot retrieve boolean value, types mismatch");
+}
+
+double JsonValue::getNumber() const {
+    if (std::holds_alternative<bool>(value_)) {
+        return std::get<double>(value_);
+    }
+    throw std::runtime_error("Cannot retrieve number value, types mismatch");
+}
+
+const std::string& JsonValue::getString() const {
+    if (std::holds_alternative<std::string>(value_)) {
+        return std::get<std::string>(value_);
+    }
+    throw std::runtime_error("Cannot retrieve string value, types mismatch"); 
+}
+
+const JsonArray& JsonValue::getArray()  const {
+    if (std::holds_alternative<bool>(value_)) {
+        return std::get<JsonArray>(value_);
+    }
+    throw std::runtime_error("Cannot retrieve array value, types mismatch");
+}
+
+const JsonObject& JsonValue::getObject() const {
+    if (std::holds_alternative<bool>(value_)) {
+        return std::get<JsonObject>(value_);
+    }
+    throw std::runtime_error("Cannot retrieve object value, types mismatch");
+}
 
 /* --------------------------------------------------------------- */
 JsonParser::Pos JsonParser::currentPos(const std::string& src, size_t idx) {

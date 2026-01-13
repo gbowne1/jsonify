@@ -30,7 +30,9 @@ int main(int argc, char* argv[]) {
 
     bool doLint = false, doFormat = false, compact = false, jsonc = false, doFix = false, doQuiet = false;
     bool useColor = true;
-    bool colorSpecified = false;
+
+    // What is the purpose of this variable? It is not used and causes compile error
+    // bool colorSpecified = false;
     
     int indent = 2;
     std::string filename;
@@ -52,8 +54,8 @@ int main(int argc, char* argv[]) {
         else if (arg == "--quiet" || arg == "-q") {
             doQuiet = true;
         }
-        else if (arg == "--color") { useColor = true; colorSpecified = true; }
-        else if (arg == "--no-color") { useColor = false; colorSpecified = true; }
+        else if (arg == "--color") { useColor = true; /*colorSpecified = true;*/ }
+        else if (arg == "--no-color") { useColor = false; /*colorSpecified = true;*/ }
         else if (arg == "--indent" && i+1 < argc) { indent = std::stoi(argv[++i]); }
         else if (arg == "--help") { printUsage(); return 0; }
         else if (arg[0] != '-')    filename = arg;
