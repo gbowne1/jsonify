@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <variant>
 #include <memory>
 #include <stdexcept>
 
@@ -15,6 +16,8 @@ using JsonObject = std::unordered_map<std::string, std::shared_ptr<JsonValue>>;
 using JsonArray  = std::vector<std::shared_ptr<JsonValue>>;
 
 class JsonValue {
+    using ValueContainer = std::variant<std::monostate, bool, double, std::string, JsonArray, JsonObject>;
+
 public:
     enum class Type { Null, Bool, Number, String, Array, Object };
 
@@ -34,11 +37,7 @@ public:
 
 private:
     Type        type_;
-    bool        bool_;
-    double      number_;
-    std::string string_;
-    JsonArray   array_;
-    JsonObject  object_;
+    ValueContainer value_;
 };
 
 class JsonParser {
