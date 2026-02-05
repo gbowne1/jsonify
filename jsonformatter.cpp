@@ -39,6 +39,7 @@ void printJson(const std::shared_ptr<JsonValue>& value,
         double n = value->getNumber();
         os << get_color(AnsiColor::NUMBER);
         if (std::isinf(n) || std::isnan(n)) os << "null";
+        else if (n==(long long)n) os << (long long)n;
         else os << std::fixed << std::setprecision(15) << n;
         os << get_reset();
         break;
