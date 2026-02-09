@@ -20,13 +20,25 @@ JSONify is a C++ command-line tool for parsing, formatting, and linting JSON and
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/jsonify.git
+   git clone https://github.com/gbowne1/jsonify.git
    cd jsonify
    ```
 
 2. Compile the source code:
    ```bash
    g++ -std=c++11 main.cpp jsonparser.cpp jsonformatter.cpp jsonlinter.cpp -o jsonify
+   ```
+
+If c++11 didn't work,
+
+   ```bash
+   g++ -std=c++17 main.cpp jsonparser.cpp jsonformatter.cpp jsonlinter.cpp -o jsonify
+   ```
+
+To build the test suite,
+
+   ```bash
+   g++ -std=c++17 linter_test.cpp jsonparser.cpp jsonformatter.cpp jsonlinter.cpp -o linter_test
    ```
 
 3. (Optional) Move the executable to a system path:
