@@ -35,14 +35,14 @@ const std::string& JsonValue::getString() const {
 }
 
 const JsonArray& JsonValue::getArray()  const {
-    if (std::holds_alternative<bool>(value_)) {
+    if (std::holds_alternative<JsonArray>(value_)) {
         return std::get<JsonArray>(value_);
     }
     throw std::runtime_error("Cannot retrieve array value, types mismatch");
 }
 
 const JsonObject& JsonValue::getObject() const {
-    if (std::holds_alternative<bool>(value_)) {
+    if (std::holds_alternative<JsonObject>(value_)) {
         return std::get<JsonObject>(value_);
     }
     throw std::runtime_error("Cannot retrieve object value, types mismatch");
