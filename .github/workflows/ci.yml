@@ -1,0 +1,52 @@
+name: C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }} with ${{ matrix.compiler }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        compiler: [gcc, clang, msvc]
+
+        exclude:
+          - os: windows-latest
+            compiler: gcc
+          - os: windows-latest
+            compiler: clang
+          - os: macos-latest
+            compiler: msvc
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up compiler
+        if: matrix.compiler == 'gcc'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ cmake
+
+      - name: Set up Clang
+        if: matrix.compiler == 'clang'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake
+
+      - name: Configure (CMake)
+        run: cmake -B build -DCMAKE_CXX_STANDARD=17
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Run tests (if any)
+        run: ctest --test-dir build --output-on-failure
+        continue-on-error: true
